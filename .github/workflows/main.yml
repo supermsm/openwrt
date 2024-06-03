@@ -1,0 +1,39 @@
+name: Build OpenWrt
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
+env:
+  TZ: Asia/Shanghai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        ref: openwrt-23.05
+
+    - name: Update Feeds
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+
+    - name: Setup Environment
+      run: |
+        echo "CONFIG_TARGET_ROOTFS_PARTSIZE=2048" >> .config 
+
+    - name: Pack Firmware
+      run: |
+        make 
+
+    - name: Upload Firmware  
+      uses: actions/upload-artifact@v2  
+      with:  
+        name: Firmware  
+        path: bin/targets/*/*/*.bin 
